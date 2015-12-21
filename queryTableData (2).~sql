@@ -1,0 +1,107 @@
+-------------OA接口表-----------------------------------------------------
+SELECT *
+  FROM SRC_OADB_INTERFACE@PROD
+ WHERE SYS_TYPE = '运维管理'
+   AND STATE = '请求';  --其中sid字段就是对应表fnd_prv_temp_session中字段：ENCODED_SESSION_ID来找到redirect_url 
+select * from fnd_prv_temp_session t ;--redirect_url
+select * from sys_session t  ; --session_id和user_id  
+-----------用户账户-------------------------------------------------------- 
+SELECT * FROM SYS_USER U; --用户表 
+SELECT * FROM EXP_EMPLOYEES E;  --员工表
+SELECT * FROM WFL_EMPLOYEE_ASSIGNS_V; --工作流员工分配视图表
+SELECT * FROM SYS_USER_ROLE_GROUPS R; --角色组表          
+SELECT * FROM EHR_PERSON_BASIC_V V; --获取员工编码表
+SELECT * FROM EXP_EMPLOYEE_TYPES_VL; --员工类型表
+SELECT * FROM SYS_USER_ROLE_GROUPS T;
+SELECT * FROM SYS_ROLE T WHERE T.ROLE_CODE = 'BX_YW_004'; --role_name_id=DESCRIPTION_ID    77（报修审核）
+
+-------------相关包---------------------------------------------------------------
+KLYW_BX_PKG; --运维平台核心过程包
+KLYW_BX_TEST_PKG; --运维平台测试包
+WFL_CORE_PKG; --工作流核心包
+WFL_DOCUMENT_REFERENCE_PKG;
+WFL_LOG_PKG;
+WFL_WORKFLOW --（存储工作流信息）
+SYS_RAISE_APP_ERRORS --错误查询表
+WFL_INSTANCE_LOG --日志记录表
+SYS_SESSION_PKG --session设置包
+WFL_APPROVE_RECORD --（审批记录表）
+  SELECT * FROM WFL_USERS_V WV WHERE WV.EMPLOYEE_NAME = '陈亮'; --工作流用户表
+FND_CODING_RULE_OBJECTS; --编码规则表
+SYS_LOGIN_PKG; --密码加密包  
+src_oa_iface_pkg;--OA接口包
+---------公司单位------------------------------------------------------------------ 
+SELECT * FROM FND_COMPANIES; --公司表         --company_code为20的失效，若分配了该公司则前台岗位和部门定以的数据差不多
+SELECT * FROM EXP_ORG_POSITION; --岗位表   
+SELECT * FROM EXP_ORG_UNIT; --单位表即部门表   
+SELECT * FROM EXP_EMPLOYEE_ASSIGNS; --employee_id->position_id 
+SELECT * FROM EXP_ORG_UNIT_VL U;
+SELECT * FROM FND_COMPANIES_VL;
+
+--------系统功能---------------------------------------------------------------------
+SELECT * FROM SYS_FUNCTION;
+SELECT * FROM SYS_SESSION T; --可查看 session_id和login_time
+SELECT C.* FROM SYS_CODE_VALUES_V C;
+SELECT * FROM FND_DESCRIPTIONS FD; --系统描述表  
+SELECT * FROM FND_INTERFACE_HEADERS; --头表
+SELECT * FROM FND_INTERFACE_LINES WHERE HEADER_ID = 142; --行表     
+SELECT * FROM FND_CODING_RULE_OBJECTS FOR UPDATE NOWAIT; --编码规则 
+
+---------附件---------------------------------------------------------------------------
+SELECT * FROM FND_ATM_ATTACHMENT T; --附件的详细具体信息source_pk_value
+SELECT * FROM FND_ATM_ATTACHMENT_MULTI T; --table_name和table_pk_value
+SELECT * FROM FND_FILEUPLOAD;
+
+---------EXCEL数据导入-------------------------------------------------------------------                                 
+SELECT * FROM KLYW_TEMP_TABLE; --自建的临时表用来存放系统名称
+SELECT * FROM FND_INTERFACE_HEADERS; --提供header_id  
+SELECT * FROM FND_INTERFACE_LINES T; ---系统临时表，用来存储导入的数据
+SEL_EXCEL_IMPORT_PKG.INSERT_INTERFACE --系统授权表插入数据的过程
+SEL_EXCEL_IMPORT_PKG; --Excel数据导入     
+
+----------运维表-----------------------------------------------------------------------------
+SELECT * FROM KLYW_SYSTEM_AT_MANAGE K ; --系统管理表
+SELECT * FROM KLYW_TEMP_TABLE FOR UPDATE NOWAIT; --临时表,excel导入数据时可能会用到
+SELECT * FROM TRO_TYPE t; --故障类型
+SELECT * FROM REPAIR_FORMS FOR UPDATE; --订单表select * from repair_forms_backup;
+SELECT * FROM WFL_APPROVE_RECORD_V; --审批者记录
+SELECT * FROM WFL_UNIT_V;
+
+-----------工作流----------------------------------------------------------------------------
+SELECT * FROM REPAIR_FORMS FOR UPDATE; --订单表
+SELECT * FROM WFL_WORKFLOW; --工作流类型，工作流代码  
+SELECT * FROM WFL_USERS_V; --结合了sys_user 和emp_exployees
+SELECT * FROM WFL_DOCUMENT_REFERENCE; --记录工作流类型-关联表    
+SELECT * FROM WFL_WORKFLOW_VL F;
+SELECT * FROM WFL_WORKFLOW_NODE_VL;
+SELECT * FROM WFL_WORKFLOW_INSTANCE T; --工作流实例表-关键是该表要有记录
+SELECT * FROM WFL_WORKFLOW_NODE；; --工作流节点表         
+SELECT * FROM WFL_WORKFLOW_NODE_ACTION; --节点动作表,只有action_id 需要描述表   
+SELECT * FROM WFL_WORKFLOW_ACTION;
+SELECT * FROM WFL_APPROVE_RECORD T; --审批记录表comment_text,node_id,intance_id
+SELECT * FROM WFL_INSTANCE_NODE_RECIPIENT T;
+SELECT * FROM WFL_WORKFLOW_ACTION_VL AC; --包含动作描述：action_title    
+select * from wfl_instance_node_rule t ;--包含了会调用哪些存储过程  
+select * from wfl_notification_record t ;--通知表      
+select * from wfl_instance_histories t ;--历史表
+
+------------工作流配置-----------------------------------------------------------------------
+--该过程与表wfl_document_reference关联
+BEGIN
+  WFL_DOCUMENT_REFERENCE_PKG.LOAD_WFL_DOCUMENT_REFERENCE('WFL_JIN', --单据类型
+                                                         'WFL_JIN', --单据类型的前台描述
+                                                         'repair_forms', --单据表
+                                                         'repairformid', --单据表的ID字段
+                                                         'repairformnumber	', --单据表的number字段
+                                                         '',
+                                                         'created_by',
+                                                         '',
+                                                         'Y',
+                                                         'ZHS',
+                                                         1);
+
+END;
+
+--------------------------------------------------------------------------------------
+--表单加密       
+SELECT * FROM SRC_ENCRYPT_FORM_TB;

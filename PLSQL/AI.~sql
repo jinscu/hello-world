@@ -1,0 +1,113 @@
+--月作业管理表
+select rowid,t.* from TACAIC0 t;
+select t.rowid,t.* from tacaim6 t;
+select t.rowid,t.* from tacaim4 t;
+--对账表
+select rowid,t.* from TMMBW01_DZ t;--线棒
+select rowid,t.* from TMMBW01_MXDZ T;--明细对账表；
+select rowid,t.* from TMMSM01_DZ t;--坯
+select rowid,t.* from TMMSM01_MXDZ T;--明细对账表；
+select rowid,t.* from TMMHP01_DZ t;--厚板
+select rowid,t.* from TMMHP01_MXDZ T;--明细对账表；
+select rowid,t.* from TMMCW01_DZ t;--特棒
+select rowid,t.* from TMMCW01_MXDZ T;--明细对账表；
+select t.rowid,t.* from TSMDF54_DZ t;--产成品
+select t.rowid,t.* from TSMDF54_MXDZ t;
+
+select t.rowid,t.* from  tacarlg t
+select t.rowid,t.* from tacaim6 t ;
+select product_code,company_code,cust_mat_no,sum(mat_net_wt) wt from TMMBW01_DZ group by company_code,product_code,cust_mat_no;
+select product_code,account,mat_no,sum(ai_store_weight) wt from tacaim6 group by account,product_code,mat_no;
+
+select cust_mat_no, sum(mat_net_wt) wt
+  from TMMBW01_DZ dz
+ where dz.company_code = @account
+   and dz.product_code = @product_code
+   and dz.cust_mat_no not in
+       (select distinct mat_no from tacaim6 where account = @account and product_code = @product_code)
+  group by cust_mat_no
+  having sum(MAT_NET_WT) <> 0
+
+select product_code,company_code,cust_mat_no,sum(mat_net_wt) wt from TMMBW01_DZ 
+group by company_code,product_code,cust_mat_no;
+
+select DZ.product_code, mat_no, M6.wt, DZ.wt, (M6.wt - DZ.wt) AS wt_minus
+  from (select product_code, company_code, cust_mat_no, sum(mat_net_wt) wt
+          from TMMBW01_DZ
+         group by company_code, product_code, cust_mat_no) DZ,
+       (select product_code, account, mat_no, sum(ai_store_weight) wt
+          from tacaim6
+         group by account, product_code, mat_no) M6  --W0210
+ where DZ.company_code = M6.account
+   and DZ.company_code = @account
+   and DZ.cust_mat_no = M6.mat_no
+   and DZ.product_code = M6.product_code
+   and DZ.product_code = @product_code
+   and DZ.wt <> M6.wt;
+
+where 
+year_mon = '201507' and 
+--app_trnc_date= '20150731' and
+ account = '1602';
+select * from tacaim2
+
+select * from tacaim6;--产副品明细库存主档
+select * from tacaiis where ;
+select * from tacaim4;--产副品与存货大类对账档
+
+select t.*, rowid
+--count(*)
+  from TACAIW2 t
+  where t.product_code = '83620' and account_title_item = '31' and control_num = '43715'; --日交易数据暂存档
+  
+  select  *
+  -- count(*)
+  --mat_no, product_code, MAT_SHAPE_FLAG, UNIT_CODE
+    from
+     LTMMBW01_TEST where product_code=' '  and MAT_SHAPE_FLAG ='8' and UNIT_CODE='L602';
+  
+  select * from LTMMBW01_TEST where product_code='L0210'
+  
+  select 'LTMMBW01_TEST' as REC_CREATOR,
+         to_char(sysdate, 'yyyymmddhhmiss') as REC_CREATE_TIME,
+         COMPANY_CODE as ACCOUNT,
+         'IW' as APP_CODE,
+         COMPANY_CODE || 'IWPN' as APP_THROW_AI_MODE,
+         to_char(sysdate, 'yyyymm')||'01' as APP_TRNC_DATE,
+         to_char(sysdate, 'yyyymm')||'01' as APP_THROW_AI_DATE,
+         product_code,
+         '00' as ACCOUNT_TITLE_ITEM,
+         ST_NO,
+         SG_SIGN,
+         MAT_NO,
+         MAT_ACT_WT,
+         '00' as AC_ROUTE
+    from LTMMBW01_TEST
+   where product_code <>' ';
+   
+   select * from tacaiiw where REC_CREATOR = 'LTMMBW01_TEST' and APP_CODE = 'IW' AND ACCOUNT_TITLE_ITEM = '00' and APP_TRNC_DATE = '20151101'
+  
+  select count(*), control_num
+    from tacaiw1
+   where account = '1602'
+     and app_trnc_date = '20150731'
+     group by  control_num having count(*) > 1 ;
+-------------------------------------------------------------------------------------------------------------
+ select * from tacaiw1
+ WHERE ACCOUNT = &account                  
+   AND PRODUCT_CODE||
+      TRIM(case when SUBSTR(PRODUCT_CODE,3,1) in ('0','2','4','6','8') then (case when ACCOUNT_TITLE_ITEM in ('01','31','72') then COST_CENTER else ' '  end ) 
+      when SUBSTR(PRODUCT_CODE,3,1) in ('1','3','5','7','9') then decode(ACCOUNT_TITLE_ITEM, '72', COST_CENTER, ' ') else ' '  end) 
+      ||ACCOUNT_TITLE_ITEM NOT IN
+      (SELECT DISTINCT (PRODUCT_CODE||
+      TRIM(case when SUBSTR(PRODUCT_CODE,3,1) in ('0','2','4','6','8') then (case when ACCOUNT_TITLE_ITEM in ('01','31','72') then COST_CENTER else ' '  end ) 
+      when SUBSTR(PRODUCT_CODE,3,1) in ('1','3','5','7','9') then decode(ACCOUNT_TITLE_ITEM, '72', COST_CENTER, ' ') else ' '  end) 
+      ||ACCOUNT_TITLE_ITEM) FROM TACAIT4  
+       WHERE ACCOUNT             = &account       
+       AND   YEAR                = &year          
+       AND   SEQ_NUM_1           = '1'            
+       )                                          
+         AND CHECK_ERROR_CODE = ' '                
+        AND BACK_CODE_1      = ' '                
+        AND SUBSTR(ACCOUNT_TITLE_ITEM,1,1) <> '9' 
+       and ACCOUNT_TITLE_ITEM<>'00' 

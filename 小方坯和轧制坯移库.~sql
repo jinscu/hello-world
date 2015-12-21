@@ -1,0 +1,8 @@
+--小方坯移库
+--求出小方坯要移库的量
+select sum(weight_ac)
+  from tacaim1
+ where account = '1602'
+   and account_title_item = '01'
+   and product_code = 'B4820'
+   and year_mon = &year_mon;

@@ -1,0 +1,39 @@
+SELECT * FROM SPL_SUPPLIERS_BASE_INFO FOR UPDATE; --（投标人基本信息表） 
+SELECT * FROM EXP_EMPLOYEES; --人员信息
+SELECT * FROM EXP_ORG_UNIT EO; --部门表
+----------------相关包---------------------------------
+SGSW_REGISTER; --投标人注册包
+SELECT SPL_SUPPLIERS_BASE_INFO_S.NEXTVAL FROM DUAL;
+CSG_SUPPLIERS_WFL;
+CSG_SRC_SUPPLIER_REGISTRATION;
+------------工作流------------------------------------
+CSG_SRC_SUPPLIER_REGISTRATION --提交工作流包
+
+--******************************费用*********************************
+  SELECT T.ROWID, T.*
+    FROM SRC_CONSIGN_SUPPLIERS T
+   WHERE T.SUPPLIER_ID = 7523
+     AND T.CONSIGN_HEADER_ID = 115; --项目投标人表
+SELECT T.ROWID, T.* FROM BID_COST_CERTIFICATE T WHERE T.AMOUNT = 33333;
+SELECT T.ROWID, T.* FROM BID_COST_CUT_PAYMENT T;
+SELECT T.ROWID, T.* FROM BID_COST_CASH_TOTALS T;
+SELECT T.ROWID, T.* FROM SRC_SOURCING_INFO T;
+SELECT T.ROWID, T.* FROM BID_COST_BASE_ACCOUNT T;
+SELECT T.ROWID, T.* FROM T_ZJJK_V_WSYHJSCX_ZBJK_NEW T; --结算系统来的视图    
+SELECT T.ROWID, T.* FROM BID_COST_SPL_ACCOUNT_V T; --新建的本系统投标人视图 
+----------------------包------------------------------------------------------------
+KLSW_COST_HANDLE_PKG --拟定集合包   
+YEAR_BZJ_TK --年度保证金退款
+PROJ_BZJ_CL --项目保证金退款     
+CAIWU_ND_BZJ_HUANYUAN; --年度保证金的撤销/冲红（也即还原）操作
+CAIWU_BZJ_HUANYUAN ---项目保证金的撤销/冲红（也即还原）操作    
+GET_PROCESSING_STAGE_NAME --已收取保证金的处理阶段           
+SRC_SUPPLY_ITEM_PKG;
+SRC_SOURCING_INFO_PKG;
+SRC_EXPENSE_PKG;
+
+-------------------修改------------------------------------------------------------------    
+FND_PRV_LOGIN_ACCOUNT --停用       改为sys_user            
+
+--数据加密
+SRC_ENCRYPT_FORM_TB

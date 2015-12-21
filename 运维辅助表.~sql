@@ -1,0 +1,173 @@
+select t.description_text from fnd_descriptions t where t.description_id = 4088;
+--岗位和单位查找表  主要是查找position_id
+--position_id 决定了  unit_id
+select *
+  from (select position_id,
+               position_code,
+               position_des,
+               a.unit_id,
+               unit_code,
+               unit_des
+          from (select t.position_id,
+                       f.description_text as position_des,
+                       t.unit_id,
+                       t.position_code,
+                       t.company_id
+                  from exp_org_position t, fnd_descriptions f
+                 where t.description_id = f.description_id
+                   AND f.language = 'ZHS') a,
+               (select t.unit_id,
+                       t.unit_code,
+                       f.description_text as unit_des,
+                       t.company_id,
+                       t.parent_unit_id
+                  from EXP_ORG_UNIT t, fnd_descriptions f
+                 where t.description_id = f.description_id
+                   AND f.language = 'ZHS') b
+         where a.unit_id = b.unit_id) t
+ where t.position_des like '%资材备件部%'--根据单位名称查找 position_id
+ 
+-- 手动分配单个岗位    前台分配功能失效了
+
+ select ee.employee_id
+   from exp_employees ee
+  where ee.EMPLOYEE_CODE = '32638'; --60701
+  --判断用户在岗位分配表中是否存在
+ select * 
+   from EXP_EMPLOYEE_ASSIGNS eea
+  where eea.employee_id =
+        (select ee.employee_id
+           from exp_employees ee
+          where ee.EMPLOYEE_CODE = '06279');
+ 
+ insert into EXP_EMPLOYEE_ASSIGNS eea
+   (eea.EMPLOYEES_ASSIGN_ID,
+    eea.EMPLOYEE_ID,
+    eea.COMPANY_ID,
+    eea.POSITION_ID,
+    eea.PRIMARY_POSITION_FLAG,
+    eea.ENABLED_FLAG,
+    CREATED_BY,
+    creation_date,
+    LAST_UPDATED_BY,
+    LAST_UPDATE_DATE)
+ values
+   (EXP_EMPLOYEE_ASSIGNS_S.NEXTVAL,
+    '36088', --@@EMPLOYEE_ID@@@@@@@@@@@@@这两个@是要填值的
+    '1', -- 公司ID 韶钢是10
+    '42', --@@视岗位而定 填岗位代码 查询上面语句@@@@@@@@@@@@
+    'Y', --主岗位
+    'Y', -- 启用
+    '1',
+    SYSDATE,
+    '1',
+    SYSDATE);
+    
+--单位审核人  
+--实际上单位审核人是没有定的，而是选的，就是选本人所处单位的某个人为审核人，选定后即可作为单位审核人
+SELECT *
+  FROM (SELECT e.employee_code AS unit_accepter_code,
+               e.name          AS unit_accepter_name
+          FROM exp_employees e
+         WHERE e.employee_id IN
+               (SELECT a.employee_id
+                  FROM wfl_employee_assigns_v a, wfl_users_v u
+                 WHERE a.position_id IN
+                       (SELECT eop.position_id
+                          FROM exp_org_position eop
+                         WHERE eop.unit_id IN
+                               (SELECT unit_id
+                                  FROM exp_org_position
+                                 WHERE position_id IN
+                                       (SELECT position_id
+                                          FROM exp_employee_assigns
+                                         WHERE employee_id =
+                                               (SELECT employee_id
+                                                  FROM sys_user
+                                                 WHERE user_id =
+                                                       ${ / session / @user_id}))))
+                   AND a.employee_id = u.employee_id)
+           AND e.employee_code IN
+               (SELECT su.user_name
+                  FROM sys_user su
+                 WHERE su.user_id IN
+                       (SELECT sur.user_id
+                          FROM sys_user_role_groups_vl sur
+                         WHERE sur.role_id = 77--这里是过滤出只有报修审核权限的人才能作为单位审批人
+                           AND ((sur.end_date > sysdate) OR
+                               (sur.end_date IS NULL)))
+                   AND su.frozen_flag != 'Y')) t
+--有 用户名带a重复的记录 
+select a.user_name,b.user_name from sys_user a,sys_user b where a.user_name =  substr(b.user_name,2) and b.user_name like 'a%';
+
+--有employee_id为空的情况
+select user_id,user_name,employee_id from sys_user t where trim(employee_id) is null;
+
+---导出各个单位具有报修审批权限的人员名单 --有些岗位重复定义了
+select distinct e.employee_code     AS "工号",
+                e.name              AS "姓名",
+                p.position_id,
+                pd.position_code,
+                d.unit_id,
+                f1.description_text AS "部门",
+                f2.description_text AS "单位"
+  from sys_user u, --user_id,employee_id
+       exp_employees e, --employee_id,EMPLOYEE_CODE,name
+       exp_employee_assigns p, --employee_id,position_id
+       exp_org_position pd, --POSITION_ID,unit_id,DESCRIPTION_ID
+       EXP_ORG_UNIT d, --unit_id,DESCRIPTION_ID
+       (SELECT distinct sur.user_id
+          FROM sys_user_role_groups_vl sur
+         WHERE sur.role_id = 77 --这里是过滤出只有报修审核权限的人才能作为单位审批人
+           AND ((sur.end_date > sysdate) OR (sur.end_date IS NULL))) T,
+       fnd_descriptions f1,
+       fnd_descriptions f2
+ where u.user_id = T.user_id
+   AND u.employee_id = e.employee_id
+   AND u.FROZEN_FLAG <> 'Y'
+   AND ((u.end_date > sysdate) OR (trim(u.end_date) IS NULL))
+   AND e.employee_id = p.employee_id
+   AND p.position_id = pd.position_id
+   AND pd.unit_id = d.unit_id
+   AND f1.description_id = pd.DESCRIPTION_ID
+   AND f2.description_id = d.DESCRIPTION_ID
+   AND f1.language = f2.language
+   AND f1.language = 'ZHS'
+   AND e.employee_code IN (
+select employee_code from--,name,position_id,position_code,unit_id,"部门","单位" 
+(
+select distinct e.employee_code     ,--AS "工号",
+                e.name              ,--AS "姓名",
+                p.position_id,
+                pd.position_code,
+                d.unit_id,
+                f1.description_text AS "部门",
+                f2.description_text AS "单位"
+  from sys_user u, --user_id,employee_id
+       exp_employees e, --employee_id,EMPLOYEE_CODE,name
+       exp_employee_assigns p, --employee_id,position_id
+       exp_org_position pd, --POSITION_ID,unit_id,DESCRIPTION_ID
+       EXP_ORG_UNIT d, --unit_id,DESCRIPTION_ID
+       (SELECT distinct sur.user_id
+          FROM sys_user_role_groups_vl sur
+         WHERE sur.role_id = 77 --这里是过滤出只有报修审核权限的人才能作为单位审批人
+           AND ((sur.end_date > sysdate) OR (sur.end_date IS NULL))) T,
+       fnd_descriptions f1,
+       fnd_descriptions f2
+ where u.user_id = T.user_id
+   AND u.employee_id = e.employee_id
+   AND u.FROZEN_FLAG <> 'Y'
+   AND ((u.end_date > sysdate) OR (trim(u.end_date) IS NULL))
+   AND e.employee_id = p.employee_id
+   AND p.position_id = pd.position_id
+   AND pd.unit_id = d.unit_id
+   AND f1.description_id = pd.DESCRIPTION_ID
+   AND f2.description_id = d.DESCRIPTION_ID
+   AND f1.language = f2.language
+   AND f1.language = 'ZHS' )
+   group by employee_code--这个分组是为了算出重复岗位的员工
+   having count(*) > 1) 
+   
+   
+select t.description_text from fnd_descriptions t where t.description_id =;
+

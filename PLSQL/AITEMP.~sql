@@ -1,0 +1,28 @@
+select * from tacaim6;--产副品明细库存主档
+select * from tacaiis where ;
+select * from tacaim4;--产副品与存货大类对账档
+select rowid,t.* from tacaim1 t where 1=2;
+select t.*, rowid
+--count(*)
+  from TACAIW2 t
+ where t.product_code = '83620'
+   and account_title_item = '31'
+   and control_num = '43715'; --日交易数据暂存档
+  
+  select count(*), control_num
+    from tacaiw1
+   where account = '1602'
+     and app_trnc_date = '20150731'
+     group by  control_num having count(*) > 1 ;
+     
+select rowid,t.* from tacaiis t where 
+--APP_TRNC_DATE = '20151130' and 
+APP_TRANSACTION_T = '100000' and REC_CREATOR = 'acairt_dois' ;
+
+
+select * from tacaim1 where product_code = '83210'
+
+;
+select * from tacairt      
+            
+     

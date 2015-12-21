@@ -1,0 +1,4 @@
+s = select t.rowid,t.* from
+d = delete from
+u = update
+i = insert into
